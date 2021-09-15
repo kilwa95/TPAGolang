@@ -6,15 +6,9 @@ import (
 	"time"
 	"fmt"
 	"os"
-	"bufio"
+    "io/ioutil"
 
 )
-
-// type Auth struct {
-//     name string 
-//     text string 
-// }
-
 
 
 func timeHandler(w http.ResponseWriter, req *http.Request) {
@@ -38,20 +32,47 @@ func createAuthHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, "Something went bad")
 		return
 		}
-		saveFile, err := os.OpenFile("./save.data", os.O_RDWR|os.O_CREATE, 0644)
-		defer saveFile.Close()
-		w := bufio.NewWriter(saveFile)
-
-		if err == nil {
-			fmt.Fprintf(w, "%s: %s\n", req.PostForm["author"], req.PostForm["entry"])
+	    f, err := os.OpenFile("./save.data", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
-		w.Flush()
+		_, err = fmt.Fprintf(f, "%s: %s\n", req.PostForm["author"][0], req.PostForm["entry"][0])
+
+		if err != nil {
+		fmt.Println(err)
+		f.Close()
+		return
+		}
+		err = f.Close()
+		if err != nil {
+		fmt.Println(err)
+		return
+		}
+		fmt.Fprintf(w, "file appended successfully")
 	}
 }
+
+
+func getListAuthHandler(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		data, err := ioutil.ReadFile("save.data")
+		if err != nil {
+			fmt.Println("File reading error", err)
+			return
+		}
+		fmt.Println("Contents of file:", string(data))
+		fmt.Fprintf(w, string(data))
+
+	}
+}
+
 
 
 func main() {
 	http.HandleFunc("/", timeHandler)
 	http.HandleFunc("/hello", createAuthHandler)
+	http.HandleFunc("/entries", getListAuthHandler)
 	http.ListenAndServe(":4567", nil)
 }
