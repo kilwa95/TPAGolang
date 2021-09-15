@@ -1,0 +1,8 @@
+GET http://localhost:4567/
+###
+
+POST http://localhost:4567/hello
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 53
+
+author=Le%20developpeur&entry=Ceci%20est%20un%20texte.
